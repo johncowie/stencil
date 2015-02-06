@@ -17,7 +17,7 @@
                               the existing children, make the new node."))
 
 (defprotocol ASTNode
-  (render [this ^StringBuilder sb context-stack]
+  (render [this ^StringBuilder sb context-stack not-found-fn]
     "Given a StringBuilder and the current context-stack, render this node to
      the result string in the StringBuilder."))
 
@@ -44,17 +44,17 @@
   (children [this] contents)
   (make-node [this children] (InvertedSection. name attrs (vec children)))
   ASTNode
-  (render [this sb context-stack]
+  (render [this sb context-stack not-found-fn]
     ;; Only render the section if the value is not present, false, or
     ;; an empty list.
     (let [ctx (first context-stack)
-          ctx-val (context-get context-stack name)]
+          ctx-val (context-get context-stack name not-found-fn)]
       ;; Per the spec, a function is truthy, so we should not render.
       (if (and (not (instance? clojure.lang.Fn ctx-val))
                (or (not ctx-val)
                    (and (sequential? ctx-val)
                         (empty? ctx-val))))
-        (render contents sb context-stack)))))
+        (render contents sb context-stack not-found-fn)))))
 (defn inverted-section [name attrs contents]
   (InvertedSection. name attrs contents))
 
@@ -105,11 +105,11 @@
 
 (extend-protocol ASTNode
   java.lang.String
-  (render [this ^StringBuilder sb context-stack] (.append sb this))
+  (render [this ^StringBuilder sb context-stack not-found-fn] (.append sb this))
   clojure.lang.PersistentVector
-  (render [this sb context-stack]
+  (render [this sb context-stack not-found-fn]
     (dotimes [i (count this)]
-      (render (nth this i) sb context-stack))))
+      (render (nth this i) sb context-stack not-found-fn))))
 
 ;; Implement a Zipper over ASTZippers.
 

@@ -22,7 +22,7 @@
                       ["a"])))
   (is (= "failure"
          (context-get '({:a "problem?"} {:a {:b "success"}})
-                      ["a" "b"] "failure"))))
+                      ["a" "b"] (constantly "failure")))))
 
 (deftest test-pass-context
   (is (= "foo" (call-lambda (fn [] "foo") nil)))

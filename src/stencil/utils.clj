@@ -35,8 +35,8 @@
    key is assumed to be either the special keyword :implicit-top, or a list of
    strings or keywords."
   ([context-stack key]
-     (context-get context-stack key nil))
-  ([context-stack key not-found]
+     (context-get context-stack key (constantly nil)))
+  ([context-stack key not-found-fn]
      ;; First need to check for an implicit top reference.
      (if (.equals :implicit-top key) ;; .equals is faster than =
        (first context-stack)
@@ -51,18 +51,18 @@
            (recur (list (map/get-named matching-context
                                        (first key))) ;; Singleton ctx stack.
                   (next key)
-                  not-found)
+                  not-found-fn)
            ;; Otherwise, we found the item!
            (map/get-named matching-context (first key)))
          ;; Didn't find a matching context.
-         not-found))))
+         (not-found-fn (first context-stack) key)))))
 
 (defn call-lambda
   "Calls a lambda function, respecting the options given in its metadata, if
    any. The content arg is the content of the tag being processed as a lambda in
    the template, and the context arg is the current context at this point in the
    processing. The latter will be ignored unless metadata directs otherwise.
- 
+
    Respected metadata:
      - :stencil/pass-context: passes the current context to the lambda as the
        second arg."
